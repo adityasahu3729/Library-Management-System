@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body { background: linear-gradient(to right, #c1e4e1, #e1ebc5); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        .container { max-width: 1500px; }
+        h2 { color: forestgreen; text-align: center; }
+
+        .table-container { overflow-x: auto; overflow-y: scroll; max-height: 500px; }
+        .book-table { width: 100%; border-collapse: collapse; }
+        .book-table th, .book-table td { padding: 10px; border: 1px solid #ddd; }
+        .book-table th { background-color: #294726; color: white; }
+        .book-table tr:nth-child(even) { background-color: #f2f2f2; }
+        .book-table tr:hover { background-color: #ddd; }
+
+        .btn-container { margin-bottom: 20px; }
+        .btn-primary { color: #fff; background-color: #294726; border-color: #294726; }
+        .search-container { text-align: right; margin-bottom: 20px; }
+        .search-container input[type=text] { padding: 6px; margin-top: 8px; margin-right: 16px; font-size: 17px; border: 1px solid #ccc; border-radius: 4px; }
+        .logout-container { position: absolute; top: 20px; right: 20px; }
+        .btn-logout { background-color: #dc3545; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+
+        .popup { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); }
+        .popup-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 50%; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: bold; }
+        .form-control { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+
+        .analytics-container { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .analytics-card { background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+        .analytics-card h3 { color: #294726; margin-bottom: 10px; }
+        .analytics-card p { font-size: 24px; font-weight: bold; color: #2c3e50; }
+
+        .tab-container { margin-bottom: 20px; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-button { padding: 10px 20px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+        .tab-button.active { background-color: #294726; color: white; border-color: #294726; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4">Library Management System</h2>
+        <div class="logout-container"><a href="/" class="btn btn-logout">Logout</a></div>
+
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('books')">Books</button>
+                <button class="tab-button" onclick="showTab('analytics')">Analytics</button>
+            </div>
+
+            <div id="books" class="tab-content active">
+                <div class="search-container"><input type="text" id="searchInput" onkeyup="searchBooks()" placeholder="Search by book name..."></div>
+                <div class="btn-container">
+                    <button class="btn btn-primary mr-2" onclick="openPopupForm('addBookPopup')">Add New Book</button>
+                    <button class="btn btn-primary" onclick="openPopupForm('collectPopup')">Borrow Book</button>
+                </div>
+                <div class="table-container"><table class="book-table" id="bookTable"><thead><tr><th>ID</th><th>Book Name</th><th>Author</th><th>Status</th><th>Assigned User</th><th>Issue Date</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+            </div>
+
+            <div id="analytics" class="tab-content">
+                <div class="analytics-container">
+                    <h3>Library Analytics</h3>
+                    <div class="analytics-grid">
+                        <div class="analytics-card"><h3>Total Books</h3><p id="totalBooks">0</p></div>
+                        <div class="analytics-card"><h3>Available Books</h3><p id="availableBooks">0</p></div>
+                        <div class="analytics-card"><h3>Borrowed Books</h3><p id="borrowedBooks">0</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addBookPopup" class="popup"><div class="popup-content"><span class="close" onclick="closePopupForm('addBookPopup')">&times;</span><h3>Add New Book</h3><form id="addBookForm"><div class="form-group"><label for="bookName">Book Name:</label><input type="text" class="form-control" placeholder="Enter book name" id="book_name" required></div><div class="form-group"><label for="author">Author:</label><input type="text" class="form-control" placeholder="Enter author" id="author_name" required></div><button type="submit" class="btn btn-primary">Add Book</button></form></div></div>
+
+    <div id="collectPopup" class="popup"><div class="popup-content"><span class="close" onclick="closePopupForm('collectPopup')">&times;</span><h3>Assign Book</h3><form id="assignBookForm"><div class="form-group"><label for="bookId">Book ID:</label><select class="form-control" id="book_id" name="book_id" required><option value="">Select Book ID</option></select></div><div class="form-group"><label for="assignedUser">Assign to User:</label><input type="text" class="form-control" id="assigned_user" name="assigned_user" placeholder="Enter user name" required></div><div class="form-group"><label for="issueDate">Issue Date:</label><input type="date" class="form-control" id="issue_date" name="issue_date" required></div><div class="form-group"><button type="submit" class="btn btn-primary">Assign Book</button><button type="button" class="btn btn-secondary ml-2" onclick="closePopupForm('collectPopup')">Cancel</button></div></form></div></div>
+
+    <script>
+        let books = [
+            { id: 1, name: "The Waste Land", author: "T.S. Eliot", status: "Available", assignedUser: "-", issueDate: "-" },
+            { id: 2, name: "Leaves of Grass", author: "Walt Whitman", status: "Available", assignedUser: "-", issueDate: "-" },
+            { id: 3, name: "The Raven", author: "Edgar Allan Poe", status: "Available", assignedUser: "-", issueDate: "-" },
+            { id: 4, name: "Clean Code", author: "Robert C. Martin", status: "Available", assignedUser: "-", issueDate: "-" },
+            { id: 5, name: "The Pragmatic Programmer", author: "Andrew Hunt & David Thomas", status: "Available", assignedUser: "-", issueDate: "-" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!JSON.parse(localStorage.getItem('currentUser'))) {
+                window.location.href = 'Librarian_login.html';
+                return;
+            }
+            document.querySelector('.btn-logout').addEventListener('click', e => {
+                e.preventDefault();
+                localStorage.removeItem('currentUser');
+                window.location.href = 'Librarian_login.html';
+            });
+            updateBookTable();
+            updateAnalytics();
+        });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content, .tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`button[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+
+        function addBook(event) {
+            event.preventDefault();
+            const bookName = document.getElementById('book_name').value.trim();
+            const authorName = document.getElementById('author_name').value.trim();
+            if (!bookName || !authorName) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            books.push({ id: books.length + 1, name: bookName, author: authorName, status: 'Available', assignedUser: '-', issueDate: '-' });
+            updateBookTable();
+            closePopupForm('addBookPopup');
+            document.getElementById('addBookForm').reset();
+        }
+
+        function assignBook(event) {
+            event.preventDefault();
+            const bookId = parseInt(document.getElementById('book_id').value);
+            const assignedUser = document.getElementById('assigned_user').value.trim();
+            const issueDate = document.getElementById('issue_date').value;
+            if (!bookId || !assignedUser || !issueDate) {
+                alert('Please fill in all fields');
+                return;
+            }
+            const book = books.find(b => b.id === bookId);
+            if (book) {
+                book.status = 'Borrowed';
+                book.assignedUser = assignedUser;
+                book.issueDate = issueDate;
+                updateBookTable();
+                closePopupForm('collectPopup');
+                document.getElementById('assignBookForm').reset();
+            }
+        }
+
+        function removeBook(bookId) {
+            if (confirm('Are you sure you want to remove this book?')) {
+                books = books.filter(b => b.id !== bookId);
+                updateBookTable();
+            }
+        }
+
+        function updateBookTable() {
+            const tbody = document.querySelector('#bookTable tbody');
+            tbody.innerHTML = books.map(book => `<tr><td>${book.id}</td><td>${book.name}</td><td>${book.author}</td><td>${book.status}</td><td>${book.assignedUser}</td><td>${book.issueDate}</td><td><button class="btn btn-danger" onclick="removeBook(${book.id})">Remove</button><button class="btn btn-success ml-2" onclick="submitBook(${book.id})">Submit</button></td></tr>`).join('');
+            const bookSelect = document.getElementById('book_id');
+            if (bookSelect) {
+                bookSelect.innerHTML = `<option value="">Select Book ID</option>${books.map(book => `<option value="${book.id}">${book.id}. ${book.name}</option>`).join('')}`;
+            }
+            updateAnalytics();
+        }
+
+        function submitBook(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (book) {
+                if (book.status === 'Borrowed') {
+                    book.status = 'Available';
+                    book.assignedUser = '-';
+                    book.issueDate = '-';
+                    updateBookTable();
+                    alert('Book has been returned successfully!');
+                } else {
+                    alert('This book is already available!');
+                }
+            }
+        }
+
+        function searchBooks() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#bookTable tbody tr').forEach(row => {
+                const text = row.cells[1].textContent.toLowerCase() + row.cells[2].textContent.toLowerCase() + row.cells[4].textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        function updateAnalytics() {
+            const stats = {
+                totalBooks: books.length,
+                availableBooks: books.filter(b => b.status === 'Available').length,
+                borrowedBooks: books.filter(b => b.status === 'Borrowed').length
+            };
+            Object.entries(stats).forEach(([id, value]) => document.getElementById(id).textContent = value);
+        }
+
+        function openPopupForm(popupId) { document.getElementById(popupId).style.display = 'block'; }
+        function closePopupForm(popupId) { document.getElementById(popupId).style.display = 'none'; }
+
+        document.getElementById('addBookForm').addEventListener('submit', addBook);
+        document.getElementById('assignBookForm').addEventListener('submit', assignBook);
+        window.onclick = event => { if (event.target.className === 'popup') event.target.style.display = 'none'; };
+    </script>
+</body>
+</html>

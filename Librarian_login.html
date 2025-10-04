@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Library Management System</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #80CBC4, #FFC107);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background-color: #ffffffcc;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-container h2 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            border-radius: 20px;
+            padding: 15px 20px;
+            border: 1px solid #ced4da;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #80cbc4;
+            box-shadow: 0 0 0 0.2rem rgba(128, 203, 196, 0.25);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .btn {
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: #80cbc4;
+            border-color: #80cbc4;
+        }
+
+        .btn-primary:hover {
+            background-color: #4db6ac;
+            border-color: #4db6ac;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .remember-me {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: white;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 100%;
+            padding: 15px 0;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        <div class="error-message" id="errorMessage"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="text" id="username" name="username" class="form-control" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+                <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+            </div>
+            <div class="remember-me">
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">Remember me</label>
+            </div>
+            <button type="submit" id="loginButton" class="btn btn-primary btn-block">Login</button>
+        </form>
+        <a href="/" class="btn btn-secondary btn-block mt-3">Back</a>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Library Management System</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const loginButton = document.getElementById('loginButton');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorMessage.style.display = 'none';
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers')) || [];
+            const user = registeredUsers.find(user => user.username === username && user.password === password);
+            
+            if (!user) {
+                showError('Invalid username or password');
+                return;
+            }
+            
+            loginButton.classList.add('btn-loading');
+            loginButton.disabled = true;
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            window.location.href = 'Book.html';
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        const rememberCheckbox = document.getElementById('remember');
+        const savedUsername = localStorage.getItem('rememberedUsername');
+        
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            rememberCheckbox.checked = true;
+        }
+
+        rememberCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                localStorage.setItem('rememberedUsername', document.getElementById('username').value);
+            } else {
+                localStorage.removeItem('rememberedUsername');
+            }
+        });
+    });
+    </script>
+</body>
+</html>
